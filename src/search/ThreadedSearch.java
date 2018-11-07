@@ -1,6 +1,7 @@
 package search;
 
 import java.util.List;
+import java.lang.Thread;
 
 public class ThreadedSearch<T> implements Searcher<T>, Runnable {
 
@@ -49,10 +50,40 @@ public class ThreadedSearch<T> implements Searcher<T>, Runnable {
          * threads, wait for them to all terminate, and then return the answer
          * in the shared `Answer` instance.
          */
-        return false;
+
+        answer = new Answer();
+        int len = list.size();
+        Thread[] threads = new Thread[numThreads];
+
+        //initialize numThreads threads
+        for (int i = 0; i < numThreads; i++) {
+            begin = Math.floorDiv(len, numThreads) * (i);
+
+            if(i == numThreads){
+                end = len;}
+            else {
+                end = Math.floorDiv(len, numThreads) * (i + 1);}
+
+            threads[i] = new Thread(new ThreadedSearch(target, list, begin, end, answer));
+            threads[i].start();
+
+        }
+
+        //join threads
+        for (int i = 0; i < numThreads; i++) {
+            threads[i].join();
+        }
+
+        return answer.getAnswer();
     }
 
     public void run() {
+        for (int i = begin; i < end && !answer.getAnswer(); i++) {
+            if (target.equals(list.get(i))){
+                answer.setAnswer(true);
+            }
+        }
+
         // Delete this `throw` when you actually implement this method.
         throw new UnsupportedOperationException();
     }
